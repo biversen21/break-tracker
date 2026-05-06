@@ -356,6 +356,60 @@ If the answer to #4 is "future problem," do not add it.
 
 ---
 
+## PR / Code Review Rules
+
+### Every Change Must
+
+- Improve clarity, speed, or usability
+- Keep interaction latency effectively instant
+- Avoid adding conceptual complexity
+- Maintain a fast, distraction-free UI
+
+### Reject Changes That
+
+- Introduce unnecessary abstraction
+- Add configuration without real need
+- Create generic systems prematurely
+- Split logic across too many files
+- Add dependencies for trivial problems
+- Move simple logic into "manager/service" patterns
+
+### UI Review Rules
+
+- Signal visibility is more important than visual polish
+- Users should understand state instantly
+- Important actions should require minimal clicks
+- Avoid modal-heavy interactions
+- Avoid dense tables and dashboard-style layouts
+
+### State Review Rules
+
+- Derived state must not be duplicated in stored state
+- Effects should be rare and justified
+- State transitions must remain obvious
+- Avoid synchronization bugs caused by duplicated state
+
+### Compute Review Rules
+
+- Computation must remain deterministic
+- Logic must remain inspectable and debuggable
+- Thresholds and signal rules must be explicit — not hidden inside abstractions
+
+### Test Review Rules
+
+- New compute logic requires tests
+- Edge cases must be covered
+- Avoid brittle UI tests
+- Prefer fewer high-signal tests over large test suites
+
+### Final Standard
+
+The codebase should feel: fast, obvious, minimal, difficult to misuse, and easy to modify under live product pressure.
+
+If a change makes the system feel more "enterprise" than "tool," reject it.
+
+---
+
 ## Definition of Done
 
 A feature is done when:
