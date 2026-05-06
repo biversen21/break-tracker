@@ -43,19 +43,30 @@ Numbers are context, never the message.
 
 ## State Model
 
-Track exactly three things:
+Static template data is not dynamic state. Teams belong to `BreakTemplate`, not `BreakState`.
 
 ```ts
+type Team = {
+  id: string;
+  name: string;
+  weight: number;
+};
+
+type BreakTemplate = {
+  id: string;
+  name: string;
+  teams: Team[];
+};
+
 type BreakState = {
-  teams: Team[];           // full list, static after load
-  removed: Set<string>;    // team IDs clicked off (not in break)
-  purchased: Set<string>;  // team IDs the user bought (optional)
+  removedTeamIds: Set<string>;
+  purchasedTeamIds: Set<string>;
   priceInput: number | null;
 };
 ```
 
 Derived values (never stored in state):
-- `remainingTeams` — filter from `teams` minus `removed`
+- `remainingTeams` — filter from `template.teams` minus `removedTeamIds`
 - `remainingValue` — sum of weights of `remainingTeams`
 - `fairValue` — `remainingValue / remainingTeams.length`
 - `signal` — derived from `fairValue` vs `priceInput`
@@ -64,7 +75,7 @@ Derived values (never stored in state):
 - Derived values are computed inline or with `useMemo`. Never stored in state.
 - State updates are synchronous. No async state mutations.
 - Never nest state. Flat structures only.
-- `removed` and `purchased` use `Set<string>` keyed by team ID. No arrays of objects for these.
+- `removedTeamIds` and `purchasedTeamIds` use `Set<string>` keyed by team ID. No arrays of objects for these.
 
 ---
 
@@ -123,79 +134,59 @@ These must always be O(1) or trivially fast:
 
 ## Validation Rules
 
-**Price input:**
-- Accept only positive numbers
-- Clamp to a reasonable max (e.g., $10,000) to prevent display bugs
-- Treat empty string and 0 as "no price entered" — show no signal
-- No signal is shown if `priceInput` is null
-
-**Team data:**
-- Validate on load that all teams have a unique ID and a numeric weight > 0
-- Fail loudly in development (`console.error` + skip invalid entries)
-- Never silently propagate bad data into signal computation
-
-**Defensive coding:**
-- Never assume `remainingTeams.length > 0` without checking — guard division by zero in `fairValue`
-- Treat all external data (even static JSON) as untrusted until validated
+- Validate numeric inputs at boundaries only — not deep inside compute functions
+- Clamp impossible values instead of throwing errors
+- Never block UI interaction because of a validation failure
+- Prefer sane defaults over exceptions
+- Pure compute functions must never return `NaN` — guard all division and coerce bad inputs at the edge
+- Derived state must always have safe fallbacks (e.g., `fairValue` returns `0` when no teams remain, signal returns `null`)
 
 ---
 
 ## Testing Rules
 
 **Must have unit tests:**
-- `getSignal(fairValue, price)` — all threshold boundaries
-- `computeFairValue(teams, removed)` — including empty remaining set
-- Any pure utility function in `lib/`
+- All pure compute functions in `lib/`
+- `getSignal` — every threshold boundary
+- `computeFairValue` — including empty remaining set
+- Edge cases: 0 remaining teams, `null` price input, duplicate toggles, empty templates
 
-**Should NOT be tested:**
-- Component rendering snapshots
+**Do NOT test:**
+- UI snapshots
+- Tailwind class output
 - Click handlers in isolation
-- Tailwind class application
-- Static data files
+- E2E flows in v1
 
-**Testing approach:**
-- Use Vitest (or Jest if already configured). No testing framework that requires a browser.
-- Tests live in `__tests__/` adjacent to the file under test or in a top-level `tests/` directory.
-- No mocking unless you are isolating a network call (there are none in V1).
-- Each test file should be readable in < 2 minutes. If it isn't, it's too complex.
-
----
-
-## Smell Detection
-
-**Overengineering signals:**
-- A new file is created to hold a function used in exactly one place
-- A custom hook is created that only wraps one `useState` call
-- A component is split to satisfy a line-count rule rather than a design rule
-- An abstraction is named after a pattern ("Factory", "Manager", "Provider") rather than the domain
-- A type has more than 2 levels of nesting
-
-**Unnecessary abstraction signals:**
-- You can't explain why a helper exists without referencing "future use"
-- Removing the helper would require zero changes to calling code logic
-- The abstraction has a generic name and a specific implementation
-
-**Premature optimization signals:**
-- `useMemo` on a computation that touches < 32 items
-- Virtualized lists for < 100 items
-- Code splitting a route that loads in < 200ms already
-- Caching values that change on every user action anyway
+**Approach:**
+- Vitest (or Jest if already present). No browser-based test runner.
+- Tests live in a top-level `tests/` directory.
+- No mocking — there are no network calls to isolate in v1.
+- Each test file must be readable in under 2 minutes. If it isn't, it's too complex.
 
 ---
 
-## Refactoring Rules
+## Overengineering Smells
 
-**Refactor when:**
-- A bug was caused by unclear state flow
-- The same logic appears in 3+ places with slight variations
-- A component is doing two conceptually separate jobs
+Stop and reconsider if you are:
 
-**Do NOT refactor when:**
-- The code works and the reason is "it could be cleaner"
-- A PR is already in review
-- The refactor introduces new abstractions without removing old ones
+- Introducing an abstraction before a second use case exists
+- Adding global state without a measured need for it
+- Building a generic component system when only one variant exists
+- Optimizing render performance before profiling shows a problem
+- Adding a configuration layer for logic that is fixed business rules
+- Splitting a file or component because it "feels big"
+- Writing a custom hook that is only called in one place
 
-**Rule:** Refactors must reduce total lines of code or total number of files, or clearly consolidate duplicated logic. Refactors that add files and lines must be rejected.
+---
+
+## Refactor Rules
+
+- Refactor only after repeated pain — not after one instance of friction
+- Duplication is acceptable early; remove it when it causes actual bugs or drift
+- Prefer explicit, readable code over reusable abstractions in v1
+- Optimize for readability over cleverness — the next reader is you in 3 weeks
+- Small files are not automatically better files; splitting adds indirection
+- A refactor that adds new files and lines without removing old ones is not a refactor — it is scope creep
 
 ---
 
