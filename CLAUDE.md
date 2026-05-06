@@ -284,6 +284,69 @@ Adding a new top-level directory requires justification in the PR description.
 
 ---
 
+## Build Sequence Rules
+
+### Core Rule
+
+Build the smallest usable version first. Working software beats flexible architecture.
+
+### Feature Development Order
+
+Do not skip steps. Do not work ahead.
+
+1. Static UI — render something real with hardcoded data
+2. Local interaction — wire up clicks, toggles, inputs
+3. Derived computation — connect live state to signal output
+4. Signal tuning — validate thresholds against real scenarios
+5. UX refinement — fix friction after real use
+6. Performance optimization — only if profiling shows a problem
+
+### UI Development Rules
+
+- Build visible UI before abstractions
+- Hardcode examples first; replace with real data once the shape is proven
+- Do not design a component system before interaction patterns are understood
+
+### State Evolution Rules
+
+- Start with local component state
+- Lift state only when two components genuinely need to share it
+- Add `useReducer` only when state transitions become difficult to reason about with `useState`
+- Do not introduce global state in v1 without measurable pain
+
+### Performance Rules
+
+- Do not optimize preemptively
+- Measure before optimizing — use React DevTools or browser profiling
+- `useMemo` is allowed only for clear rerender or computation issues
+- Avoid complex caching entirely in v1
+
+### Refactoring Rules
+
+- Refactor after repeated friction, not anticipation
+- 2 instances of duplication is acceptable
+- 3+ similar implementations may justify abstraction
+- Explicit code is preferred over clever architecture
+
+### Shipping Rules
+
+- The app must remain deployable at all times
+- Avoid long-running branches or large rewrites
+- Prefer incremental improvements over big-bang redesigns
+
+### Decision Filter
+
+Before adding any abstraction or dependency, answer these:
+
+1. Does this reduce real complexity today?
+2. Is there repeated pain already?
+3. Would removing this make the app easier to understand?
+4. Is this solving a current problem or a hypothetical future problem?
+
+If the answer to #4 is "future problem," do not add it.
+
+---
+
 ## Git Workflow Rules
 
 - One branch per logical change. Never push new work to a branch whose PR has already been merged.
