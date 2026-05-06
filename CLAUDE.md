@@ -221,6 +221,69 @@ Adding a new top-level directory requires justification in the PR description.
 
 ---
 
+## Implementation Standards
+
+### File Organization
+
+```
+/app          → Next.js routes and root layout only
+/components   → UI components, no compute logic
+/lib          → pure compute functions, types, constants
+/hooks        → shared stateful hooks only
+/templates    → static break template data (JSON or TS)
+/tests        → all test files
+```
+
+- Pure computation lives in `/lib`, never inside a component
+- No business logic inside JSX — derive it before the return statement
+- No catch-all `utils/` folder; name folders after what they contain
+
+### Component Rules
+
+- A component does one job — renders a piece of UI with its direct state
+- Extract a component when: it has independent local state, it repeats in a list, or it is used in more than one place
+- Do not extract a component when: the only reason is line count, the split creates a pass-through wrapper, or the child would never be reused
+- Avoid prop drilling past 2–3 levels — lift state or restructure layout
+- Do not build reusable abstractions until a second real use case exists
+
+### Hook Rules
+
+- Hooks are for shared stateful behavior only
+- Do not create a hook used by a single component unless the internal complexity clearly justifies it
+- Avoid `useEffect` for anything derivable — use `useMemo` or inline computation instead
+- Derived values belong in `useMemo`, not in `useEffect` + `useState` pairs
+
+### Compute Function Rules
+
+- All compute functions must be pure: same inputs → same output, every time
+- No hidden mutation of arguments or external state
+- No async logic inside compute functions
+- Guard every division — return `0` or `null` when the denominator is zero or the array is empty
+- Never return `NaN` or `Infinity` from a compute function
+
+### Styling Rules
+
+- Tailwind only — no inline styles, no CSS-in-JS, no external style libraries
+- Keep conditional class logic simple; extract a variable if the expression exceeds one ternary
+- No animation libraries in v1
+- Prioritize readability and contrast over visual polish — this tool is used under time pressure
+
+### Testing Structure
+
+- Tests live in `/tests` at the project root
+- Vitest preferred; Jest acceptable if already configured
+- Test behavior and outputs, not internal implementation details
+- One test file per module under test — keep them short and readable
+
+### Dependency Rules
+
+- Every new dependency must justify its bundle cost before being added
+- Prefer native browser and Node APIs when they cover the need
+- Do not add "helper" libraries (lodash, date-fns, etc.) unless they remove meaningful complexity that would otherwise require 50+ lines of custom code
+- No dependency that requires a build plugin or polyfill unless unavoidable
+
+---
+
 ## Git Workflow Rules
 
 - One branch per logical change. Never push new work to a branch whose PR has already been merged.
