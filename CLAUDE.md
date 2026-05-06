@@ -221,6 +221,15 @@ Adding a new top-level directory requires justification in the PR description.
 
 ---
 
+## Git Workflow Rules
+
+- One branch per logical change. Never push new work to a branch whose PR has already been merged.
+- After a PR merges, cut a new branch from `main` for the next change.
+- Before referencing a PR URL, confirm it is open — not closed or merged.
+- Branch names must describe the change, not the session or agent that made it.
+
+---
+
 ## Definition of Done
 
 A feature is done when:
