@@ -45,17 +45,24 @@ type Props = {
 }
 
 export default function SignalDisplay({ signal, fairValue, edge, remainingSpots }: Props) {
+  if (remainingSpots === 0) {
+    return (
+      <div className="w-full rounded-xl border border-gray-800 px-6 py-8 flex flex-col items-center gap-2 bg-gray-900/20">
+        <span className="text-3xl leading-none text-gray-700">—</span>
+        <span className="text-base font-medium text-gray-600">No teams in the break</span>
+        <span className="text-xs text-gray-700">Click a team to add it back</span>
+      </div>
+    )
+  }
+
   const config = SIGNAL_CONFIG[signal]
 
   const aggressive = fairValue * 1.05
-  const balanced   = fairValue * 0.95
+  const balanced = fairValue * 0.95
   const conservative = fairValue * 0.85
-
-  const showRanges = fairValue > 0
 
   return (
     <div className={`w-full rounded-xl border px-6 py-6 flex flex-col items-center gap-3 ${config.bgColor} ${config.borderColor}`}>
-      {/* Primary signal */}
       <div className="flex flex-col items-center gap-1">
         <span className="text-6xl leading-none">{config.emoji}</span>
         <span className={`text-4xl font-bold tracking-tight ${config.textColor}`}>
@@ -63,22 +70,22 @@ export default function SignalDisplay({ signal, fairValue, edge, remainingSpots 
         </span>
       </div>
 
-      {/* Secondary numbers */}
       <div className="flex flex-wrap justify-center gap-x-6 gap-y-1 text-sm font-mono text-gray-500">
         <span>Fair value: <span className="text-gray-400">${fairValue.toFixed(2)}</span></span>
-        {edge !== null && (
+        {edge !== null ? (
           <span>
             Edge:{' '}
             <span className={edge >= 0 ? 'text-green-400' : 'text-red-400'}>
-              {edge >= 0 ? '+' : ''}{edge.toFixed(2)}
+              {edge >= 0 ? '+' : ''}${Math.abs(edge).toFixed(2)}
             </span>
           </span>
+        ) : (
+          <span className="text-gray-700">Enter a price to evaluate</span>
         )}
-        <span className="text-gray-600">{remainingSpots} spots left</span>
+        <span className="text-gray-600">{remainingSpots} spot{remainingSpots !== 1 ? 's' : ''} left</span>
       </div>
 
-      {/* Target buy ranges */}
-      {showRanges && (
+      {fairValue > 0 && (
         <div className="flex flex-wrap justify-center gap-x-5 gap-y-1 text-xs font-mono text-gray-600 pt-1 border-t border-white/5 w-full">
           <span>Conservative: <span className="text-gray-500">${conservative.toFixed(2)}</span></span>
           <span>Balanced: <span className="text-gray-500">${balanced.toFixed(2)}</span></span>

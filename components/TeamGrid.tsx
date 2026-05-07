@@ -16,12 +16,11 @@ export default function TeamGrid({ teams, removedTeamIds, purchasedTeamIds, onTo
 
   return (
     <div className="w-full">
-      {/* Status summary */}
       <div className="flex items-center gap-4 mb-3 text-xs font-mono text-gray-600">
         <span><span className="text-gray-400">{remaining}</span> remaining</span>
         {removed > 0 && <span><span className="text-gray-500">{removed}</span> out</span>}
         {purchased > 0 && <span><span className="text-green-700">{purchased}</span> bought</span>}
-        <span className="ml-auto text-gray-800">click=out · shift=bought</span>
+        <span className="ml-auto text-gray-800">click · ⇧click bought</span>
       </div>
 
       <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">

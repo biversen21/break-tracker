@@ -24,14 +24,16 @@ export default function PriceInput({ value, onChange }: Props) {
         <span className="text-gray-400 text-xl font-mono">$</span>
         <input
           type="number"
+          inputMode="decimal"
           min={0}
           value={value ?? ''}
           onChange={handleChange}
           placeholder="0.00"
-          className="w-44 bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-white text-2xl text-center font-mono placeholder-gray-700 focus:outline-none focus:border-gray-500"
+          className="w-44 bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-white text-2xl text-center font-mono placeholder-gray-700 focus:outline-none focus:border-gray-500 focus:ring-1 focus:ring-gray-500"
         />
         {value !== null && (
           <button
+            type="button"
             onClick={() => onChange(null)}
             className="text-gray-600 hover:text-gray-400 text-lg px-1 leading-none"
             aria-label="Clear price"
