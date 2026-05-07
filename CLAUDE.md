@@ -136,13 +136,10 @@ Must always be O(1) or trivially fast:
 - Rendering the signal display
 - Any click handler on team removal
 
-**Rules:**
 - Do not optimize preemptively. Measure before optimizing.
 - No `useEffect` for computing derived values — use `useMemo` or inline computation.
-- No sorting or filtering inside render without `useMemo`.
-- Debounce price input at 150ms to avoid re-rendering the full team list on every keystroke.
+- Debounce price input at 150ms. Do not re-render the full team list on every keystroke.
 - `useMemo` is justified only for clear rerender or computation problems.
-- No complex caching in v1.
 
 ---
 
@@ -151,45 +148,35 @@ Must always be O(1) or trivially fast:
 - Validate numeric inputs at boundaries only — not deep inside compute functions.
 - Clamp impossible values instead of throwing errors.
 - Never block UI interaction because of a validation failure.
-- Prefer sane defaults over exceptions.
-- Compute functions must never return `NaN` — guard all division and coerce bad inputs at the edge.
+- Compute functions must never return `NaN` — guard all division at the edge.
 - Derived values must always have safe fallbacks (e.g., `fairValue` returns `0` when no teams remain, signal returns `null`).
 
 ---
 
 ## Testing Rules
 
-**Must have unit tests:**
-- All compute functions in `lib/`
-- `getSignal` — every threshold boundary
-- `computeFairValue` — including empty remaining set
-- Edge cases: 0 remaining teams, `null` price input, duplicate toggles, empty templates
+**Must test:**
+- All compute functions in `lib/` — every threshold boundary and edge case
+- `computeFairValue` with: 0 remaining teams, `null` price input, duplicate toggles, empty templates
 
 **Never test:**
-- UI snapshots
-- Tailwind class output
-- Click handlers in isolation
-- E2E flows in v1
+- UI snapshots, Tailwind classes, click handlers in isolation, E2E flows in v1
 
 **Approach:**
-- Vitest (or Jest if already present). No browser-based test runner.
-- Tests live in `/tests` at the project root. One file per module.
-- No mocking — there are no network calls in v1.
-- Each test file must be readable in under 2 minutes. If it isn't, it's too complex.
+- Vitest preferred. No browser-based test runner.
+- Tests live in `/tests`. One file per module. No mocking.
 
 ---
 
 ## Overengineering Smells
 
-Stop and reconsider if you are:
-
+Stop if you are:
 - Introducing an abstraction before a second use case exists
-- Adding global state without a measured need for it
+- Adding global state without a measured need
 - Building a generic component system when only one variant exists
-- Optimizing render performance before profiling shows a problem
-- Adding a configuration layer for logic that is fixed business rules
+- Adding a configuration layer for fixed business logic
 - Splitting a file or component because it "feels big"
-- Writing a custom hook that is only called in one place
+- Writing a hook that is only called in one place
 
 ---
 
@@ -197,7 +184,6 @@ Stop and reconsider if you are:
 
 - Refactor only after repeated pain — not after one instance of friction.
 - 2 instances of duplication are acceptable. 3+ may justify abstraction.
-- Prefer explicit, readable code over reusable abstractions in v1.
 - A refactor that adds files and lines without removing old ones is scope creep, not a refactor.
 
 ---
@@ -210,42 +196,31 @@ Stop and reconsider if you are:
 /app          → Next.js routes and root layout only
 /components   → UI components, no compute logic
 /lib          → pure compute functions, types, constants
-/hooks        → shared stateful hooks only
-/templates    → static break template data (JSON or TS)
 /tests        → all test files
 ```
 
 - Compute logic lives in `/lib`, never inside a component.
 - No business logic inside JSX — derive it before the return statement.
-- No catch-all `utils/` folder; name folders after what they contain.
+- No catch-all `utils/` folder. Add `/hooks` or `/templates` only when they contain real files.
 - Adding a new top-level directory requires justification in the PR description.
-
-### Hook Rules
-
-- Hooks are for shared stateful behavior only.
-- Do not create a hook used by a single component unless the internal complexity clearly justifies it.
-- Derived values belong in `useMemo`, not in `useEffect` + `useState` pairs.
 
 ### Compute Function Rules
 
 - All compute functions must be pure: same inputs → same output, every time.
-- No hidden mutation of arguments or external state.
-- No async logic inside compute functions.
+- No async logic. No hidden mutation. Never return `NaN` or `Infinity`.
 - Guard every division — return `0` or `null` when the denominator is zero or the array is empty.
-- Never return `NaN` or `Infinity` from a compute function.
 
 ### Styling Rules
 
 - Tailwind only — no inline styles, no CSS-in-JS, no external style libraries.
-- Keep conditional class logic simple; extract a variable if the expression exceeds one ternary.
 - No animation libraries in v1.
 - Prioritize readability and contrast over visual polish — this tool is used under time pressure.
 
 ### Dependency Rules
 
 - Every new dependency must justify its bundle cost before being added.
-- Prefer native browser and Node APIs when they cover the need.
-- Do not add helper libraries (lodash, date-fns, etc.) unless they remove complexity that would otherwise require 50+ lines of custom code.
+- Prefer native browser APIs over libraries.
+- Do not add helper libraries unless they replace 50+ lines of custom code.
 - No dependency that requires a build plugin or polyfill unless unavoidable.
 
 ---
@@ -265,17 +240,11 @@ Do not skip steps. Do not work ahead.
 5. UX refinement — fix friction after real use
 6. Performance optimization — only if profiling shows a problem
 
-### UI Development Rules
-
-- Build visible UI before abstractions.
-- Hardcode examples first; replace with real data once the shape is proven.
-- Do not design a component system before interaction patterns are understood.
-
 ### State Evolution Rules
 
 - Start with local component state.
 - Lift state only when two components genuinely need to share it.
-- Add `useReducer` only when state transitions become difficult to reason about with `useState`.
+- Add `useReducer` only when state transitions become hard to reason about with `useState`.
 - Do not introduce global state in v1 without measurable pain.
 
 ### Shipping Rules
@@ -283,17 +252,6 @@ Do not skip steps. Do not work ahead.
 - The app must remain deployable at all times.
 - Avoid long-running branches or large rewrites.
 - Prefer incremental improvements over big-bang redesigns.
-
-### Decision Filter
-
-Before adding any abstraction or dependency:
-
-1. Does this reduce real complexity today?
-2. Is there repeated pain already?
-3. Would removing this make the app easier to understand?
-4. Is this solving a current problem or a hypothetical future problem?
-
-If the answer to #4 is "future problem," do not add it.
 
 ---
 
@@ -308,15 +266,9 @@ If the answer to #4 is "future problem," do not add it.
 
 ## PR / Code Review Rules
 
-### Every Change Must
+**Every change must** improve clarity, speed, or usability without adding conceptual complexity.
 
-- Improve clarity, speed, or usability
-- Keep interaction latency effectively instant
-- Avoid adding conceptual complexity
-- Maintain a fast, distraction-free UI
-
-### Reject Changes That
-
+**Reject changes that:**
 - Introduce unnecessary abstraction
 - Add configuration without real need
 - Create generic systems prematurely
@@ -324,108 +276,20 @@ If the answer to #4 is "future problem," do not add it.
 - Add dependencies for trivial problems
 - Move simple logic into "manager/service" patterns
 
-### UI Review Rules
+**UI bar:** Signal visibility first. State must be obvious at a glance. Minimal clicks for every action. No modals, no dense tables.
 
-- Signal visibility is more important than visual polish
-- Users must understand state instantly
-- Important actions must require minimal clicks
-- Avoid modal-heavy interactions
-- Avoid dense tables and dashboard-style layouts
-
-### State Review Rules
-
-- Derived state must not be duplicated in stored state
-- Effects must be rare and justified
-- State transitions must remain obvious
-- Avoid synchronization bugs caused by duplicated state
-
-### Compute Review Rules
-
-- Computation must remain deterministic
-- Logic must remain inspectable and debuggable
-- Thresholds and signal rules must be explicit — not hidden inside abstractions
-
-### Test Review Rules
-
-- New compute logic requires tests
-- Edge cases must be covered
-- Avoid brittle UI tests
-- Prefer fewer high-signal tests over large test suites
-
-### Final Standard
-
-The codebase must feel: fast, obvious, minimal, difficult to misuse, and easy to modify under live product pressure.
-
-If a change makes the system feel more "enterprise" than "tool," reject it.
+**Final standard:** The codebase must feel fast, obvious, and minimal. If it feels "enterprise," reject it.
 
 ---
 
 ## Development Workflow
 
-### Task Scope Rules
-
-- Implement one meaningful step at a time
-- Do not build multiple systems simultaneously
-- Do not anticipate future features unless explicitly requested
-- Prefer incomplete but working increments over complete but unverified systems
-
-### Response Rules
-
-When asked to implement something:
-
-- Start with the simplest viable version
-- Prefer hardcoded data first; replace once the shape is proven
-- Avoid speculative abstractions
-- Explain tradeoffs briefly when relevant
-- Ask for clarification only when ambiguity blocks implementation
-
-### Output Rules
-
-For implementation tasks:
-
-- Provide complete file contents when modifying files
-- Avoid partial snippets unless specifically requested
-- Keep code immediately runnable
-- Do not omit imports
-- Do not leave TODO placeholders unless explicitly requested
-
-### Coding Rules
-
-- Prioritize readability over conciseness
-- Avoid magic behavior
-- Avoid hidden side effects
-- Keep event flow easy to trace
-- Prefer explicit naming
-
-### Error Handling Rules
-
-- Fail safely — never crash the UI
-- Prefer resilient defaults over thrown exceptions
-- Surface only actionable errors to users
-- Swallow and log internal errors; expose user-facing ones clearly
-
-### UX Rules
-
-- Interactions must feel instant
-- Minimize required typing
-- Avoid unnecessary confirmations
-- Every click must produce obvious, immediate feedback
-
-### Communication Rules
-
-- Be concise
-- Avoid long explanations
-- Avoid architectural essays
-- Focus on implementation quality and tradeoffs
-
-### Final Principle
-
-This product is a fast decision tool, not a platform. Every implementation decision must preserve:
-
-- Speed
-- Clarity
-- Trust
-- Low cognitive load
+- Implement one meaningful step at a time. Do not build multiple systems simultaneously.
+- Start with the simplest viable version. Hardcode data first; replace once the shape is proven.
+- Do not anticipate future features unless explicitly requested.
+- Provide complete file contents when modifying files. Do not omit imports. No TODO placeholders.
+- Fail safely — never crash the UI. Prefer resilient defaults. Surface only actionable errors.
+- Interactions must feel instant. Every click must produce obvious, immediate feedback.
 
 ---
 
