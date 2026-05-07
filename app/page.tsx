@@ -6,13 +6,14 @@ import PriceInput from '@/components/PriceInput'
 import TeamGrid from '@/components/TeamGrid'
 import TemplateSelector from '@/components/TemplateSelector'
 import ResetButton from '@/components/ResetButton'
+import UndoButton from '@/components/UndoButton'
 import { BREAK_TEMPLATES, DEFAULT_TEMPLATE_ID } from '@/lib/templates'
 import { useBreakState } from '@/state/useBreakState'
 import { computeBreakState } from '@/lib/compute'
 
 export default function HomePage() {
   const [selectedTemplateId, setSelectedTemplateId] = useState(DEFAULT_TEMPLATE_ID)
-  const { state, toggleRemovedTeam, togglePurchasedTeam, setPriceInput, resetBreakState } = useBreakState()
+  const { state, toggleRemovedTeam, togglePurchasedTeam, setPriceInput, resetBreakState, canUndo, undoLastAction } = useBreakState()
 
   const selectedTemplate =
     BREAK_TEMPLATES.find((t) => t.id === selectedTemplateId) ?? BREAK_TEMPLATES[0]!
@@ -46,6 +47,7 @@ export default function HomePage() {
           onSelectTemplate={handleSelectTemplate}
         />
         <ResetButton onReset={resetBreakState} disabled={!canReset} />
+        <UndoButton onUndo={undoLastAction} disabled={!canUndo} />
       </div>
 
       <SignalDisplay
