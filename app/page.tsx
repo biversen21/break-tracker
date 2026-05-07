@@ -5,6 +5,7 @@ import SignalDisplay from '@/components/SignalDisplay'
 import PriceInput from '@/components/PriceInput'
 import TeamGrid from '@/components/TeamGrid'
 import TemplateSelector from '@/components/TemplateSelector'
+import ResetButton from '@/components/ResetButton'
 import { BREAK_TEMPLATES, DEFAULT_TEMPLATE_ID } from '@/lib/templates'
 import { useBreakState } from '@/state/useBreakState'
 import { computeBreakState } from '@/lib/compute'
@@ -21,6 +22,9 @@ export default function HomePage() {
     resetBreakState()
   }
 
+  const canReset =
+    state.removedTeamIds.size > 0 || state.purchasedTeamIds.size > 0 || state.priceInput !== null
+
   const computed = useMemo(
     () => computeBreakState(selectedTemplate, state),
     [selectedTemplate, state],
@@ -35,11 +39,14 @@ export default function HomePage() {
         <p className="text-xs text-gray-700 uppercase tracking-widest">Break Tracker</p>
       </header>
 
-      <TemplateSelector
-        templates={BREAK_TEMPLATES}
-        selectedTemplateId={selectedTemplateId}
-        onSelectTemplate={handleSelectTemplate}
-      />
+      <div className="w-full flex items-center gap-3">
+        <TemplateSelector
+          templates={BREAK_TEMPLATES}
+          selectedTemplateId={selectedTemplateId}
+          onSelectTemplate={handleSelectTemplate}
+        />
+        <ResetButton onReset={resetBreakState} disabled={!canReset} />
+      </div>
 
       <SignalDisplay
         signal={computed.signal}
