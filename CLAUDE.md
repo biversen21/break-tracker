@@ -410,6 +410,75 @@ If a change makes the system feel more "enterprise" than "tool," reject it.
 
 ---
 
+## Development Workflow
+
+### Task Scope Rules
+
+- Implement one meaningful step at a time
+- Do not build multiple systems simultaneously
+- Do not anticipate future features unless explicitly requested
+- Prefer incomplete but working increments over complete but unverified systems
+
+### Response Rules
+
+When asked to implement something:
+
+- Start with the simplest viable version
+- Prefer hardcoded data first; replace once the shape is proven
+- Avoid speculative abstractions
+- Explain tradeoffs briefly when relevant
+- Ask for clarification only when ambiguity blocks implementation
+
+### Output Rules
+
+For implementation tasks:
+
+- Provide complete file contents when modifying files
+- Avoid partial snippets unless specifically requested
+- Keep code immediately runnable
+- Do not omit imports
+- Do not leave TODO placeholders unless explicitly requested
+
+### Coding Rules
+
+- Prioritize readability over conciseness
+- Avoid magic behavior
+- Avoid hidden side effects
+- Keep event flow easy to trace
+- Prefer explicit naming
+
+### Error Handling Rules
+
+- Fail safely — never crash the UI
+- Prefer resilient defaults over thrown exceptions
+- Surface only actionable errors to users
+- Swallow and log internal errors; expose user-facing ones clearly
+
+### UX Rules
+
+- Interactions should feel instant
+- Minimize required typing
+- Avoid unnecessary confirmations
+- Every click should produce obvious, immediate feedback
+
+### Communication Rules
+
+- Be concise
+- Avoid long explanations
+- Avoid architectural essays
+- Focus on implementation quality and tradeoffs
+
+### Final Principle
+
+This product is a fast decision tool, not a platform. Every implementation decision should preserve:
+
+- Speed
+- Clarity
+- Trust
+- Low cognitive load
+
+---
+
 ## Definition of Done
 
 A feature is done when:
