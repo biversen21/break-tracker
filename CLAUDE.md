@@ -92,66 +92,67 @@ function getSignal(fairValue: number, price: number): Signal {
 ```
 
 - Thresholds live in a single `constants.ts` file. Nowhere else.
-- This function is pure. It takes numbers and returns a string. No side effects.
+- `getSignal` is pure. No side effects.
 - Must have unit tests. This is the core of the product.
 
 ---
 
-## Component Design Rules
+## Component Rules
 
 **Split a component when:**
 - It has its own local state unrelated to the parent
 - It renders a repeated unit (e.g., each team in a list)
 - It is reused in more than one place
 
-**Do NOT split a component when:**
-- The only reason is "it's getting long"
-- The split would require threading props through a new intermediate component
-- The extracted component would never be reused and has no independent state
+**Do not split a component when:**
+- The only reason is line count
+- The split creates a pass-through wrapper
+- The child would never be reused and has no independent state
 
-**Max component depth for any feature: 3 levels.** If you're going deeper, the component model is wrong.
+**Max component depth: 3 levels.** Going deeper means the component model is wrong.
 
-**Props:**
-- No prop drilling past 2 levels. Lift state or rethink layout.
-- No "god props" (objects with 10+ fields passed to a child). Pass what the child needs.
+- No prop drilling past 2 levels. Lift state or restructure layout.
+- No reusable abstractions until a second real use case exists.
 
 ---
 
 ## Performance Rules
 
-These must always be O(1) or trivially fast:
-
+Must always be O(1) or trivially fast:
 - Signal computation (`getSignal`)
 - Rendering the signal display
 - Any click handler on team removal
 
-**Avoid:**
-- `useEffect` for computing derived values — use `useMemo` or inline computation
-- Sorting or filtering inside render without `useMemo`
-- Re-rendering the full team list on every price keystroke — debounce price input at 150ms or derive signal only from the final committed value
+**Rules:**
+- Do not optimize preemptively. Measure before optimizing.
+- No `useEffect` for computing derived values — use `useMemo` or inline computation.
+- No sorting or filtering inside render without `useMemo`.
+- Debounce price input at 150ms to avoid re-rendering the full team list on every keystroke.
+- `useMemo` is justified only for clear rerender or computation problems.
+- No complex caching in v1.
 
 ---
 
 ## Validation Rules
 
-- Validate numeric inputs at boundaries only — not deep inside compute functions
-- Clamp impossible values instead of throwing errors
-- Never block UI interaction because of a validation failure
-- Prefer sane defaults over exceptions
-- Pure compute functions must never return `NaN` — guard all division and coerce bad inputs at the edge
-- Derived state must always have safe fallbacks (e.g., `fairValue` returns `0` when no teams remain, signal returns `null`)
+- Validate numeric inputs at boundaries only — not deep inside compute functions.
+- Clamp impossible values instead of throwing errors.
+- Never block UI interaction because of a validation failure.
+- Prefer sane defaults over exceptions.
+- Compute functions must never return `NaN` — guard all division and coerce bad inputs at the edge.
+- Derived values must always have safe fallbacks (e.g., `fairValue` returns `0` when no teams remain, signal returns `null`).
 
 ---
 
 ## Testing Rules
 
 **Must have unit tests:**
-- All pure compute functions in `lib/`
+- All compute functions in `lib/`
 - `getSignal` — every threshold boundary
 - `computeFairValue` — including empty remaining set
 - Edge cases: 0 remaining teams, `null` price input, duplicate toggles, empty templates
 
-**Do NOT test:**
+**Never test:**
 - UI snapshots
 - Tailwind class output
 - Click handlers in isolation
@@ -159,8 +160,8 @@ These must always be O(1) or trivially fast:
 
 **Approach:**
 - Vitest (or Jest if already present). No browser-based test runner.
-- Tests live in a top-level `tests/` directory.
-- No mocking — there are no network calls to isolate in v1.
+- Tests live in `/tests` at the project root. One file per module.
+- No mocking — there are no network calls in v1.
 - Each test file must be readable in under 2 minutes. If it isn't, it's too complex.
 
 ---
@@ -181,43 +182,10 @@ Stop and reconsider if you are:
 
 ## Refactor Rules
 
-- Refactor only after repeated pain — not after one instance of friction
-- Duplication is acceptable early; remove it when it causes actual bugs or drift
-- Prefer explicit, readable code over reusable abstractions in v1
-- Optimize for readability over cleverness — the next reader is you in 3 weeks
-- Small files are not automatically better files; splitting adds indirection
-- A refactor that adds new files and lines without removing old ones is not a refactor — it is scope creep
-
----
-
-## Iteration Philosophy
-
-- Ship the simplest version that produces a correct signal
-- Add configuration only when the absence causes real user pain, not theoretical pain
-- Extend the state model only when a new user-facing behavior requires it — never pre-emptively
-- Before adding any new component, file, or hook, ask: "Would removing this break a user-visible behavior?" If no, don't add it.
-- V1 is a static frontend. V2 might add data. Design V1 as if V2 will never exist. Migrate if V2 happens.
-
----
-
-## File Structure
-
-```
-/app
-  page.tsx          # single page, root layout
-/components
-  SignalDisplay.tsx  # the primary output: signal + label
-  TeamList.tsx       # list of teams with remove toggle
-  PriceInput.tsx     # price entry
-/lib
-  signal.ts          # getSignal(), computeFairValue()
-  constants.ts       # thresholds, team weights
-  types.ts           # shared TypeScript types
-/tests
-  signal.test.ts
-```
-
-Adding a new top-level directory requires justification in the PR description.
+- Refactor only after repeated pain — not after one instance of friction.
+- 2 instances of duplication are acceptable. 3+ may justify abstraction.
+- Prefer explicit, readable code over reusable abstractions in v1.
+- A refactor that adds files and lines without removing old ones is scope creep, not a refactor.
 
 ---
 
@@ -234,59 +202,42 @@ Adding a new top-level directory requires justification in the PR description.
 /tests        → all test files
 ```
 
-- Pure computation lives in `/lib`, never inside a component
-- No business logic inside JSX — derive it before the return statement
-- No catch-all `utils/` folder; name folders after what they contain
-
-### Component Rules
-
-- A component does one job — renders a piece of UI with its direct state
-- Extract a component when: it has independent local state, it repeats in a list, or it is used in more than one place
-- Do not extract a component when: the only reason is line count, the split creates a pass-through wrapper, or the child would never be reused
-- Avoid prop drilling past 2–3 levels — lift state or restructure layout
-- Do not build reusable abstractions until a second real use case exists
+- Compute logic lives in `/lib`, never inside a component.
+- No business logic inside JSX — derive it before the return statement.
+- No catch-all `utils/` folder; name folders after what they contain.
+- Adding a new top-level directory requires justification in the PR description.
 
 ### Hook Rules
 
-- Hooks are for shared stateful behavior only
-- Do not create a hook used by a single component unless the internal complexity clearly justifies it
-- Avoid `useEffect` for anything derivable — use `useMemo` or inline computation instead
-- Derived values belong in `useMemo`, not in `useEffect` + `useState` pairs
+- Hooks are for shared stateful behavior only.
+- Do not create a hook used by a single component unless the internal complexity clearly justifies it.
+- Derived values belong in `useMemo`, not in `useEffect` + `useState` pairs.
 
 ### Compute Function Rules
 
-- All compute functions must be pure: same inputs → same output, every time
-- No hidden mutation of arguments or external state
-- No async logic inside compute functions
-- Guard every division — return `0` or `null` when the denominator is zero or the array is empty
-- Never return `NaN` or `Infinity` from a compute function
+- All compute functions must be pure: same inputs → same output, every time.
+- No hidden mutation of arguments or external state.
+- No async logic inside compute functions.
+- Guard every division — return `0` or `null` when the denominator is zero or the array is empty.
+- Never return `NaN` or `Infinity` from a compute function.
 
 ### Styling Rules
 
-- Tailwind only — no inline styles, no CSS-in-JS, no external style libraries
-- Keep conditional class logic simple; extract a variable if the expression exceeds one ternary
-- No animation libraries in v1
-- Prioritize readability and contrast over visual polish — this tool is used under time pressure
-
-### Testing Structure
-
-- Tests live in `/tests` at the project root
-- Vitest preferred; Jest acceptable if already configured
-- Test behavior and outputs, not internal implementation details
-- One test file per module under test — keep them short and readable
+- Tailwind only — no inline styles, no CSS-in-JS, no external style libraries.
+- Keep conditional class logic simple; extract a variable if the expression exceeds one ternary.
+- No animation libraries in v1.
+- Prioritize readability and contrast over visual polish — this tool is used under time pressure.
 
 ### Dependency Rules
 
-- Every new dependency must justify its bundle cost before being added
-- Prefer native browser and Node APIs when they cover the need
-- Do not add "helper" libraries (lodash, date-fns, etc.) unless they remove meaningful complexity that would otherwise require 50+ lines of custom code
-- No dependency that requires a build plugin or polyfill unless unavoidable
+- Every new dependency must justify its bundle cost before being added.
+- Prefer native browser and Node APIs when they cover the need.
+- Do not add helper libraries (lodash, date-fns, etc.) unless they remove complexity that would otherwise require 50+ lines of custom code.
+- No dependency that requires a build plugin or polyfill unless unavoidable.
 
 ---
 
 ## Build Sequence Rules
-
-### Core Rule
 
 Build the smallest usable version first. Working software beats flexible architecture.
 
@@ -303,40 +254,26 @@ Do not skip steps. Do not work ahead.
 
 ### UI Development Rules
 
-- Build visible UI before abstractions
-- Hardcode examples first; replace with real data once the shape is proven
-- Do not design a component system before interaction patterns are understood
+- Build visible UI before abstractions.
+- Hardcode examples first; replace with real data once the shape is proven.
+- Do not design a component system before interaction patterns are understood.
 
 ### State Evolution Rules
 
-- Start with local component state
-- Lift state only when two components genuinely need to share it
-- Add `useReducer` only when state transitions become difficult to reason about with `useState`
-- Do not introduce global state in v1 without measurable pain
-
-### Performance Rules
-
-- Do not optimize preemptively
-- Measure before optimizing — use React DevTools or browser profiling
-- `useMemo` is allowed only for clear rerender or computation issues
-- Avoid complex caching entirely in v1
-
-### Refactoring Rules
-
-- Refactor after repeated friction, not anticipation
-- 2 instances of duplication is acceptable
-- 3+ similar implementations may justify abstraction
-- Explicit code is preferred over clever architecture
+- Start with local component state.
+- Lift state only when two components genuinely need to share it.
+- Add `useReducer` only when state transitions become difficult to reason about with `useState`.
+- Do not introduce global state in v1 without measurable pain.
 
 ### Shipping Rules
 
-- The app must remain deployable at all times
-- Avoid long-running branches or large rewrites
-- Prefer incremental improvements over big-bang redesigns
+- The app must remain deployable at all times.
+- Avoid long-running branches or large rewrites.
+- Prefer incremental improvements over big-bang redesigns.
 
 ### Decision Filter
 
-Before adding any abstraction or dependency, answer these:
+Before adding any abstraction or dependency:
 
 1. Does this reduce real complexity today?
 2. Is there repeated pain already?
@@ -377,15 +314,15 @@ If the answer to #4 is "future problem," do not add it.
 ### UI Review Rules
 
 - Signal visibility is more important than visual polish
-- Users should understand state instantly
-- Important actions should require minimal clicks
+- Users must understand state instantly
+- Important actions must require minimal clicks
 - Avoid modal-heavy interactions
 - Avoid dense tables and dashboard-style layouts
 
 ### State Review Rules
 
 - Derived state must not be duplicated in stored state
-- Effects should be rare and justified
+- Effects must be rare and justified
 - State transitions must remain obvious
 - Avoid synchronization bugs caused by duplicated state
 
@@ -404,7 +341,7 @@ If the answer to #4 is "future problem," do not add it.
 
 ### Final Standard
 
-The codebase should feel: fast, obvious, minimal, difficult to misuse, and easy to modify under live product pressure.
+The codebase must feel: fast, obvious, minimal, difficult to misuse, and easy to modify under live product pressure.
 
 If a change makes the system feel more "enterprise" than "tool," reject it.
 
@@ -456,10 +393,10 @@ For implementation tasks:
 
 ### UX Rules
 
-- Interactions should feel instant
+- Interactions must feel instant
 - Minimize required typing
 - Avoid unnecessary confirmations
-- Every click should produce obvious, immediate feedback
+- Every click must produce obvious, immediate feedback
 
 ### Communication Rules
 
@@ -470,7 +407,7 @@ For implementation tasks:
 
 ### Final Principle
 
-This product is a fast decision tool, not a platform. Every implementation decision should preserve:
+This product is a fast decision tool, not a platform. Every implementation decision must preserve:
 
 - Speed
 - Clarity
