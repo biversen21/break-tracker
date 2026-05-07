@@ -1,5 +1,18 @@
 # CLAUDE.md — Break Tracker Development Rules
 
+## Operating Principle
+
+- This is a live decision tool, not a platform — build it like one.
+- Speed and clarity beat flexibility every time.
+- Working software beats scalable architecture.
+- Build only what is needed now; future requirements do not exist yet.
+- Prefer explicit solutions over abstract systems.
+- Minimize cognitive load for users and developers equally.
+- Every interaction must feel instant and produce obvious feedback.
+- If a change makes the codebase feel more "enterprise," it is wrong.
+
+---
+
 ## What This Product Is
 
 A real-time decision signal tool for sports card breaks. Users are in live streams, emotional, and need fast trust signals — not data to interpret.
