@@ -8,6 +8,7 @@ type UseBreakStateReturn = {
   toggleRemovedTeam: (teamId: string) => void
   togglePurchasedTeam: (teamId: string) => void
   setPriceInput: (value: number | null) => void
+  resetBreakState: () => void
 }
 
 export function useBreakState(): UseBreakStateReturn {
@@ -37,5 +38,9 @@ export function useBreakState(): UseBreakStateReturn {
     setState((prev) => ({ ...prev, priceInput: value }))
   }
 
-  return { state, toggleRemovedTeam, togglePurchasedTeam, setPriceInput }
+  function resetBreakState() {
+    setState({ removedTeamIds: new Set(), purchasedTeamIds: new Set(), priceInput: null })
+  }
+
+  return { state, toggleRemovedTeam, togglePurchasedTeam, setPriceInput, resetBreakState }
 }
