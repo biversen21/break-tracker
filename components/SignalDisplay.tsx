@@ -1,6 +1,6 @@
-type SignalValue = 'STRONG_BUY' | 'VALUE' | 'FAIR' | 'OVERPRICED'
+import type { SignalType } from '@/lib/types'
 
-const SIGNAL_CONFIG: Record<SignalValue, { emoji: string; label: string; color: string }> = {
+const SIGNAL_CONFIG: Record<SignalType, { emoji: string; label: string; color: string }> = {
   STRONG_BUY: { emoji: '🔥', label: 'Strong Buy Zone', color: 'text-orange-400' },
   VALUE:      { emoji: '🟢', label: 'Value',           color: 'text-green-400'  },
   FAIR:       { emoji: '🟡', label: 'Fair',            color: 'text-yellow-400' },
@@ -8,12 +8,12 @@ const SIGNAL_CONFIG: Record<SignalValue, { emoji: string; label: string; color: 
 }
 
 type Props = {
-  signal: SignalValue
-  fairValue?: number
-  ratio?: number
+  signal: SignalType
+  fairValue: number
+  edge: number | null
 }
 
-export default function SignalDisplay({ signal, fairValue, ratio }: Props) {
+export default function SignalDisplay({ signal, fairValue, edge }: Props) {
   const config = SIGNAL_CONFIG[signal]
 
   return (
@@ -22,12 +22,12 @@ export default function SignalDisplay({ signal, fairValue, ratio }: Props) {
       <span className={`text-3xl font-bold tracking-tight ${config.color}`}>
         {config.label}
       </span>
-      {fairValue !== undefined && ratio !== undefined && (
-        <div className="flex gap-6 mt-2 text-sm text-gray-500 font-mono">
-          <span>Fair value: ${fairValue.toFixed(2)}</span>
-          <span>Ratio: {ratio.toFixed(2)}x</span>
-        </div>
-      )}
+      <div className="flex gap-6 mt-2 text-sm text-gray-500 font-mono">
+        <span>Fair value: ${fairValue.toFixed(2)}</span>
+        {edge !== null && (
+          <span>Edge: {edge >= 0 ? '+' : ''}{edge.toFixed(2)}</span>
+        )}
+      </div>
     </div>
   )
 }

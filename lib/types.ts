@@ -17,3 +17,12 @@ export type BreakState = {
 }
 
 export type SignalType = 'STRONG_BUY' | 'VALUE' | 'FAIR' | 'OVERPRICED'
+
+export type ComputedBreakState = {
+  remainingTeams: Team[]
+  remainingSpots: number
+  remainingValue: number
+  fairValue: number
+  edge: number | null
+  signal: SignalType
+}
