@@ -3,12 +3,6 @@
 import { useState } from 'react'
 import type { BreakState } from '@/lib/types'
 
-const EMPTY_STATE: BreakState = {
-  removedTeamIds: new Set(),
-  purchasedTeamIds: new Set(),
-  priceInput: null,
-}
-
 type UseBreakStateReturn = {
   state: BreakState
   toggleRemovedTeam: (teamId: string) => void
@@ -20,7 +14,11 @@ type UseBreakStateReturn = {
 }
 
 export function useBreakState(): UseBreakStateReturn {
-  const [state, setState] = useState<BreakState>({ ...EMPTY_STATE, removedTeamIds: new Set(), purchasedTeamIds: new Set() })
+  const [state, setState] = useState<BreakState>({
+    removedTeamIds: new Set(),
+    purchasedTeamIds: new Set(),
+    priceInput: null,
+  })
   const [previousState, setPreviousState] = useState<BreakState | null>(null)
 
   const canUndo = previousState !== null
